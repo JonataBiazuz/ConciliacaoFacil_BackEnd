@@ -22,7 +22,8 @@ app.register_blueprint(conta_receber_bp, url_prefix='/api/conta-receber')
 app.register_blueprint(conciliacao_bp, url_prefix='/api/conciliacao')
 
 # Configuração do banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+#app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://conciliacao_user:eKJJ2ChP7KarkFPEGtD4stgUpZTAdKWd@dpg-d1709c6mcj7s73clh4d0-a/conciliacao_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
