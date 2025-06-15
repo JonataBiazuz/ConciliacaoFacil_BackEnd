@@ -178,3 +178,44 @@ def listar_contas_pendentes():
     except Exception as e:
         return jsonify({'erro': f'Erro ao listar contas pendentes: {str(e)}'}), 500
 
+@conta_receber_bp.route('/importar-csv', methods=['POST'])
+def importar_contas_receber_csv():
+    """Importa contas a receber a partir de um arquivo CSV"""
+    from src.utils.csv_parser import parse_contas_receber_csv
+    import io
+    from decimal import Decimal
+    from datetime import datetime
+    try:
+        if 'file' not in request.files:
+            return jsonify({'erro': 'Arquivo não enviado'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'erro': 'Nome do arquivo vazio'}), 400
+        contas = parse_contas_receber_csv(file.read())
+        inseridas = []
+        erros = []
+        for row in contas:
+            try:
+                conta = ContaReceber(
+                    numero_pedido=row.get('numero_pedido'),
+                    cliente_nome=row['cliente_nome'],
+                    cliente_cpf_cnpj=row.get('cliente_cpf_cnpj'),
+                    valor_esperado=Decimal(str(row['valor_esperado'])),
+                    data_vencimento=datetime.strptime(row['data_vencimento'], '%Y-%m-%d').date() if row.get('data_vencimento') else None,
+                    status=row.get('status', 'pendente'),
+                    observacoes=row.get('observacoes')
+                )
+                db.session.add(conta)
+                inseridas.append(row)
+            except Exception as e:
+                erros.append({'row': row, 'erro': str(e)})
+        db.session.commit()
+        return jsonify({
+            'sucesso': True,
+            'inseridas': len(inseridas),
+            'erros': erros
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'erro': f'Erro ao importar: {str(e)}'}), 500
+
